@@ -1,0 +1,4 @@
+{
+    "sketch": "src\\chamber\\chamber.ino",
+    "board": "arduino:sam:arduino_due_x"
+}
