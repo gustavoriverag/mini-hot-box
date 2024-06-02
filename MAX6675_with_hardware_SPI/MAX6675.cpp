@@ -35,6 +35,7 @@ float MAX6675::readTempF()
 
 void MAX6675::setPin(int16_t SSPin)
 {
+	digitalWrite(_SSPin, LOW);
 	_SSPin = SSPin;
 	pinMode(_SSPin, OUTPUT);
 	digitalWrite(_SSPin, HIGH);
