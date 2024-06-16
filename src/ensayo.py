@@ -4,16 +4,23 @@ import matplotlib.animation as animation
 from collections import deque
 import json
 import os
+import time
+
+
+startTime = time.time()
+print("Start Time: ", startTime)
 
 # Set up the serial port. Replace 'COM3' with your serial port.
-ser = serial.Serial('COM3', 9600, timeout=1)
+# ser = serial.Serial('COM3', 9600, timeout=1)
 
 # Deque to store incoming data
 data = deque(maxlen=100)  # Adjust maxlen as per your requirements
 
 # Read json file map from file
 cwd = os.getcwd()
-map = open("heated_chamber.json", "r")
+data_structure = open("heated_chamber.json", "r")
+
+print(json.loads(data_structure))
 
 # Initialize the deque with zeros
 for _ in range(100):
@@ -24,7 +31,7 @@ def process_data(line):
     data = line.split(",")
     print(data)
     # map data to json
-    mapped_data = map.format(*data)
+    mapped_data = data_structure.format(*data)
     json_data = json.loads(mapped_data)
     print(json_data)
 
@@ -56,4 +63,4 @@ ani = animation.FuncAnimation(fig, update, interval=100)
 plt.show()
 
 # Close the serial port when done
-ser.close()
+# ser.close()

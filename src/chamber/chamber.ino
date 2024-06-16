@@ -60,7 +60,6 @@ void setup() {
 }
 
 void loop() {
-  Serial.print("Ensayo,");
   // Leer temperatura
   for (int i=0;i<n_termocuplas;i++){
     temp = termocuplas[i].readTempC();
