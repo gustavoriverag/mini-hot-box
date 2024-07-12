@@ -9,6 +9,13 @@ MAX6675::MAX6675(int16_t SSPin=10)
 	_lastCallTime = 0;
 }
 
+MAX6675::MAX6675()
+{
+	// _SSPin is set to 0 to indicate that the pin has not been set
+	_SSPin = 0;
+	_lastCallTime = 0;
+}
+
 float MAX6675::readTempC()
 {
 	if (millis() - _lastCallTime >= MAX6675_READ_PERIOD)
@@ -35,8 +42,12 @@ float MAX6675::readTempF()
 
 void MAX6675::setPin(int16_t SSPin)
 {
+	if (_SSPin != 0) {
+		return;
+	}
 	digitalWrite(_SSPin, LOW);
 	_SSPin = SSPin;
 	pinMode(_SSPin, OUTPUT);
 	digitalWrite(_SSPin, HIGH);
+	SPI.begin();
 }

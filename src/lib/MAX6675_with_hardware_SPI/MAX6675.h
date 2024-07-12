@@ -1,3 +1,7 @@
+#ifndef MAX6675_h
+#define MAX6675_h
+
+#include <Arduino.h>
 #include <SPI.h>
 
 #define MAX6675_Settings (SPISettings(1000000, MSBFIRST, SPI_MODE1))
@@ -16,7 +20,10 @@ class MAX6675
 			
 	public:
 		MAX6675 (int16_t SSPin);
+		MAX6675 ();
 		float readTempC();
 		float readTempF();
 		void setPin(int16_t SSPin);
 };
+
+#endif
