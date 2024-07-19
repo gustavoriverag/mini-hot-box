@@ -11,10 +11,10 @@ const int pwm_c = 2;
 const int pwm_f = 3;
 
 // Array de n termocuplas
-const size_t n_termocuplas = 21;
+const size_t n_termocuplas = 22;
 
 // Using pins from 22 to 44
-const int THC_PINS[n_termocuplas] = {22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42};
+const int THC_PINS[n_termocuplas] = {22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43};
 
 // Se crean los objetos de las termocuplas
 MAX6675 termocuplas[n_termocuplas];
@@ -35,7 +35,7 @@ float voltage;
 //Variables PID caliente
 double setpoint_c, temp_c, output_c;
 //Parametros PID caliente
-double kp_c = 1, ki_c = 3, kd_c = 0;
+double kp_c = 0.2, ki_c = 2, kd_c = 0.1;
 
 PID pidCaliente(&temp_c, &output_c, &setpoint_c, kp_c, ki_c, kd_c, P_ON_M, DIRECT);
 
@@ -61,7 +61,7 @@ int state = 0;
 void setup() {
   
   // Inicializar serial
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   // Inicializar termocuplas
   for (int i=0;i<n_termocuplas;i++){

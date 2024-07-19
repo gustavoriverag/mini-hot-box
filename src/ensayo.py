@@ -54,15 +54,17 @@ def update(frame):
     axs[0][0].set_xlabel('Time')
     axs[0][0].set_ylabel('Temperatura [°C]')
     axs[0][0].set_title('Temperaturas probeta lado caliente')
+    axs[0][0].legend([columns[t] for t in indexes["Probeta caliente"]])
 
     axs[0][1].clear()
-    for t in indexes["Probeta frío"]:
-        axs[0][1].plot(df[-cant_datos:, t])
+    # for t in indexes["Probeta frío"]:
+    #     axs[0][1].plot(df[-cant_datos:, t])
+    axs[1][1].plot(df[-cant_datos:, indexes["Calefactor"][1]])
     axs[0][1].set_xlim(0, 100)
-    axs[0][1].set_ylim(0, 25)  # Adjust Y-axis limits as per your data
+    # axs[0][1].set_ylim(0, 25)  # Adjust Y-axis limits as per your data
     axs[0][1].set_xlabel('Time')
     axs[0][1].set_ylabel('Temperatura [°C]')
-    axs[0][1].set_title(columns[indexes["Calefactor"][2]])
+    axs[0][1].set_title(columns[indexes["Calefactor"][1]])
 
     axs[1][0].clear()
     potencia = df[-cant_datos:, indexes["Calefactor"][2]] * df[-cant_datos:, indexes["Calefactor"][3]]
@@ -71,8 +73,8 @@ def update(frame):
     axs[1][0].set_xlim(0, 100)
     # axs[1][0].set_ylim(0, 120)  # Adjust Y-axis limits as per your data
     axs[1][0].set_xlabel('Time')
-    axs[1][0].set_ylabel('Potencia [W]')
-    axs[1][0].set_title('Potencia consumida por calefactor')
+    axs[1][0].set_ylabel('PWM')
+    axs[1][0].set_title('Valores PWM Calefactor')
 
     axs[1][1].clear()
     axs[1][1].plot(df[-cant_datos:, indexes["Calefactor"][1]])
@@ -95,35 +97,63 @@ def update(frame):
     # axs[1][1].set_title('Temperaturas calefactor')
     # axs[1][1].legend([columns[indexes["Calefactor"][1]], columns[indexes["Calefactor"][3]]])
     # axs[1][1].legend([columns[indexes["Cámara Caliente"][0]], columns[indexes["Cámara Caliente"][1]], columns[indexes["Cámara Fría"][0]]])
+
 def connect():
     global ser
+    global df
     if ser is not None:
+        ser.write("0".encode())
         ser.close()
         ser = None
         port_combobox.state(["!disabled"])
         connect_button.config(text="Connect")
+        start_button.config(text="Start Plotting")
         start_button.config(state="disabled")
+        temp_control_button.config(text="Start Temp Control")
         temp_control_button.config(state="disabled")
+        save_data()
         return
     if port_combobox.get() == "":
         return
-    port = port_combobox.get()
-    ser = serial.Serial(port, 9600, timeout=1)
+    port = port_combobox.get().split(" ")[0]
+    ser = serial.Serial(port, 115200, timeout=1)
     print("Connected to: ", port_combobox.get())
     port_combobox.state(["disabled"])
     connect_button.config(text="Disconnect")
     start_button.config(state="normal")
+
+def get_ports():
+    ports = serial.tools.list_ports.comports()
+    ports = [port.device + " " + port.description for port in ports]
+    port_combobox.configure(values=ports)
+    
+def save_data():
+    global df
+    global timestamps
+    temp_timestamps = np.array(["Timestamp"] + timestamps)
+    temp_df = np.append([columns], df, axis=0)
+    temp_df = np.c_[temp_timestamps, temp_df]
+    temp_df = pd.DataFrame(temp_df)
+    temp_df.to_csv(output_path + "data_" + startTime.replace("/", "_").replace(" ", "_").replace(":", "_") + ".csv", index=False, header=False)
+    print("Data saved!")
 
 def close():
     global ser
     if ser is not None:
         ser.close()
         ser = None
-    root.destroy()
+    try:
+        root.destroy()
+    except:
+        pass
 
 def schedule_update():
+    global lastSave
     update(0)
     canvas.draw_idle()
+    if time.time() - lastSave > 5*60:
+        save_data()
+        lastSave = time.time()
     root.after(1000, schedule_update)
 
 def plot_toggle():
@@ -154,12 +184,16 @@ def temp_control_toggle():
         start_button.config(state="normal")
         temp_control_button.config(text="Start Temp Control")
 
+output_path = "../outputs/"
+
 root = tk.Tk()
 # root.geometry("1280x720")
 root.title("Ensayo")
 
 startTime = readTime()
 print("Start Time: ", startTime)
+
+lastSave = time.time()
 
 #Get list of available serial ports
 ports = serial.tools.list_ports.comports()
@@ -187,44 +221,44 @@ df = np.zeros((1, len(columns)))
 
 state = 0
 
-port_combobox = ttk.Combobox(root, values=ports)
-port_combobox.pack()
+frame = tk.Frame(root)
 
-connect_button = tk.Button(root, text="Connect", command=connect)
-connect_button.pack()
+port_combobox = ttk.Combobox(frame, values=ports, postcommand=get_ports)
+port_combobox.grid(row=0, column=0, columnspan=2)
 
-close_button = tk.Button(root, text="Close window", command=close)
-close_button.pack()
+connect_button = tk.Button(frame, text="Connect", command=connect)
+connect_button.grid(row=0, column=2, columnspan=2)
 
-start_button = tk.Button(root, text="Start Plotting", command=plot_toggle, state="disabled")
-start_button.pack()
+close_button = tk.Button(frame, text="Close window", command=close)
+# close_button.pack()
 
-temp_control_button = tk.Button(root, text="Start Temp Control", command=temp_control_toggle, state="disabled")
-temp_control_button.pack()
+start_button = tk.Button(frame, text="Start Plotting", command=plot_toggle, state="disabled")
+start_button.grid(row=1, column=0, columnspan=4, sticky="ew")
+
+temp_control_button = tk.Button(frame, text="Start Temp Control", command=temp_control_toggle, state="disabled")
+temp_control_button.grid(row=2, column=0, columnspan=4, sticky="ew")
+
+hot_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Heater PWM")
+hot_pwm.grid(row=3, column=0, columnspan=4, sticky="ew")
+cold_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Cooler PWM")
+cold_pwm.grid(row=4, column=0, columnspan=4, sticky="ew")
 
 # Set up the figure and axis
-fig, axs = plt.subplots(2,2, figsize=(12,12))
+fig, axs = plt.subplots(2,2, figsize=(9, 9))
 # ani = animation.FuncAnimation(fig, update, interval=1000)
 
+frame.grid(row=0, column=0, sticky="n")
 canvas = tkagg.FigureCanvasTkAgg(fig, master=root)
-canvas.get_tk_widget().pack()
+canvas.get_tk_widget().grid(row=0, column=1)
 
 root.mainloop()
+close()
 
-timestamps = np.array(["Timestamp"] + timestamps)
-df = np.append([columns], df, axis=0)
-df = np.c_[timestamps, df]
 
-output_path = "../outputs/"
-print(os.path.abspath(output_path))
 
 if not os.path.exists(output_path):
     os.makedirs(output_path)
 
 #save data to csv, with a timestamp in the name
-df = pd.DataFrame(df)
-df.to_csv(output_path + "data_" + startTime.replace("/", "_").replace(" ", "_").replace(":", "_") + ".csv", index=False, header=False)
-
-# Close the serial port when done
-if ser is not None:
-    ser.close()
+save_data()
+# print("Data saved to: ", os.path.abspath(output_path))

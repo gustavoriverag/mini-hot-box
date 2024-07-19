@@ -45,7 +45,6 @@ void MAX6675::setPin(int16_t SSPin)
 	if (_SSPin != 0) {
 		return;
 	}
-	digitalWrite(_SSPin, LOW);
 	_SSPin = SSPin;
 	pinMode(_SSPin, OUTPUT);
 	digitalWrite(_SSPin, HIGH);
