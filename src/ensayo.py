@@ -187,7 +187,7 @@ def temp_control_toggle():
 output_path = "../outputs/"
 
 root = tk.Tk()
-# root.geometry("1280x720")
+#root.geometry("1280x720")
 root.title("Ensayo")
 
 startTime = readTime()
@@ -244,7 +244,8 @@ cold_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Cooler P
 cold_pwm.grid(row=4, column=0, columnspan=4, sticky="ew")
 
 # Set up the figure and axis
-fig, axs = plt.subplots(2,2, figsize=(9, 9))
+fig, axs = plt.subplots(2,2, figsize=(4.5, 4.5))
+# fig, axs = plt.subplots(2,2)
 # ani = animation.FuncAnimation(fig, update, interval=1000)
 
 frame.grid(row=0, column=0, sticky="n")

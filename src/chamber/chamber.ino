@@ -4,7 +4,7 @@
 
 // Definir termocupla ambiente caliente y frío
 #define AMBIENTE_C 9
-#define AMBIENTE_F 1
+#define AMBIENTE_F 21
 
 // Pines PWM caliente y frío
 const int pwm_c = 2;
