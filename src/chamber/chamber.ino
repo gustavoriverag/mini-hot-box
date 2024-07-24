@@ -3,8 +3,8 @@
 #include <utils.h>
 
 // Definir termocupla ambiente caliente y frío
-#define AMBIENTE_C 9
-#define AMBIENTE_F 1
+#define AMBIENTE_C 10
+#define AMBIENTE_F 20
 
 // Pines PWM caliente y frío
 const int pwm_c = 2;
@@ -35,14 +35,14 @@ float voltage;
 //Variables PID caliente
 double setpoint_c, temp_c, output_c;
 //Parametros PID caliente
-double kp_c = 0.2, ki_c = 2, kd_c = 0.1;
+double kp_c = 0.2, ki_c = 1.5, kd_c = 0.1;
 
 PID pidCaliente(&temp_c, &output_c, &setpoint_c, kp_c, ki_c, kd_c, P_ON_M, DIRECT);
 
 //Variables PID frío
 double setpoint_f, temp_f, output_f;
 //Parametros PID frío
-double kp_f = 1, ki_f = 3, kd_f = 1;
+double kp_f = 0.2, ki_f = 1.5, kd_f = 0.1;
 
 PID pidFrio(&temp_f, &output_f, &setpoint_f, kp_f, ki_f, kd_f, P_ON_M, REVERSE);
 
@@ -148,10 +148,15 @@ void loop() {
     pidCaliente.Compute();
   }
   analogWrite(pwm_c, output_c);
+
   // Calcular PID
-  // temp_f = temps[AMBIENTE_F]/samples;
-  // pidFrio.Compute();
-  // analogWrite(pwm_f, output_f);
+  if (state == 1){
+    output_f = 0;
+  } else {
+    temp_f = temps[AMBIENTE_F]/samples;
+    pidFrio.Compute();
+  }
+  analogWrite(pwm_f, output_f);
 
 
   for (int i = 0; i < n_termocuplas; i++){

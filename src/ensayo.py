@@ -49,6 +49,7 @@ def update(frame):
     axs[0][0].clear()
     for t in indexes["Probeta caliente"]:
         axs[0][0].plot(df[-cant_datos:, t])
+    axs[0][0].axhline(y=30, color='r', linestyle='-')
     axs[0][0].set_xlim(0, 100)
     axs[0][0].set_ylim(15, 40)  # Adjust Y-axis limits as per your data
     axs[0][0].set_xlabel('Time')
@@ -57,36 +58,41 @@ def update(frame):
     axs[0][0].legend([columns[t] for t in indexes["Probeta caliente"]])
 
     axs[0][1].clear()
-    # for t in indexes["Probeta frío"]:
-    #     axs[0][1].plot(df[-cant_datos:, t])
-    axs[1][1].plot(df[-cant_datos:, indexes["Calefactor"][1]])
+    for t in indexes["Probeta frío"]:
+        axs[0][1].plot(df[-cant_datos:, t])
     axs[0][1].set_xlim(0, 100)
-    # axs[0][1].set_ylim(0, 25)  # Adjust Y-axis limits as per your data
+    axs[0][1].set_ylim(0, 25)  # Adjust Y-axis limits as per your data
+    axs[0][1].axhline(y=10, color='r', linestyle='-')
     axs[0][1].set_xlabel('Time')
     axs[0][1].set_ylabel('Temperatura [°C]')
-    axs[0][1].set_title(columns[indexes["Calefactor"][1]])
+    axs[0][1].set_title('Temperaturas probeta lado frío')
+    axs[0][1].legend([columns[t] for t in indexes["Probeta frío"]])
 
     axs[1][0].clear()
     potencia = df[-cant_datos:, indexes["Calefactor"][2]] * df[-cant_datos:, indexes["Calefactor"][3]]
     # axs[1][0].plot(potencia)
     axs[1][0].plot(df[-cant_datos:, indexes["Calefactor"][0]])
+    axs[1][0].plot(df[-cant_datos:, indexes["Refrigerador"][0]])
     axs[1][0].set_xlim(0, 100)
     # axs[1][0].set_ylim(0, 120)  # Adjust Y-axis limits as per your data
     axs[1][0].set_xlabel('Time')
     axs[1][0].set_ylabel('PWM')
-    axs[1][0].set_title('Valores PWM Calefactor')
+    axs[1][0].legend([columns[indexes["Calefactor"][0]], columns[indexes["Refrigerador"][0]]])
+    axs[1][0].set_title('Valores PWM')
 
     axs[1][1].clear()
     axs[1][1].plot(df[-cant_datos:, indexes["Calefactor"][1]])
     axs[1][1].plot(df[-cant_datos:, indexes["Cámara Caliente"][0]])
     axs[1][1].plot(df[-cant_datos:, indexes["Cámara Caliente"][1]])
     axs[1][1].plot(df[-cant_datos:, indexes["Cámara Fría"][0]])
+    axs[1][1].plot(df[-cant_datos:, indexes["Cámara Fría"][1]])
+    axs[1][1].axhline(y=30, color='r', linestyle='-')
     axs[1][1].set_xlim(0, 100)
-    axs[1][1].set_ylim(0, 40)  # Adjust Y-axis limits as per your data
+    axs[1][1].set_ylim(0, 80)  # Adjust Y-axis limits as per your data
     axs[1][1].set_xlabel('Time')
     axs[1][1].set_ylabel('Temperatura [°C]')
     axs[1][1].set_title('Temperaturas cámara caliente y fría')
-    axs[1][1].legend([columns[indexes["Calefactor"][1]], columns[indexes["Cámara Caliente"][0]], columns[indexes["Cámara Caliente"][1]], columns[indexes["Cámara Fría"][0]]])
+    axs[1][1].legend([columns[indexes["Calefactor"][1]], columns[indexes["Cámara Caliente"][0]], columns[indexes["Cámara Caliente"][1]], columns[indexes["Cámara Fría"][0]], columns[indexes["Cámara Fría"][1]]])
     # axs[1][1].clear()
     # axs[1][1].plot(df[-cant_datos:, indexes["Calefactor"][1]])
     # # axs[1][1].plot(df[-cant_datos:, indexes["Calefactor"][3]])
@@ -248,8 +254,10 @@ fig, axs = plt.subplots(2,2, figsize=(9, 9))
 # ani = animation.FuncAnimation(fig, update, interval=1000)
 
 frame.grid(row=0, column=0, sticky="n")
-canvas = tkagg.FigureCanvasTkAgg(fig, master=root)
-canvas.get_tk_widget().grid(row=0, column=1)
+frame2 = tk.Frame(root)
+canvas = tkagg.FigureCanvasTkAgg(fig, master=frame2)
+canvas.get_tk_widget().pack()
+frame2.grid(row=0, column=1, sticky="n")
 
 root.mainloop()
 close()

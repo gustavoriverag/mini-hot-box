@@ -1,6 +1,6 @@
 #include <MAX6675.h>
 
-#define CS_PIN 10
+#define CS_PIN 34
 MAX6675 tcouple(CS_PIN);
 
 void setup()
