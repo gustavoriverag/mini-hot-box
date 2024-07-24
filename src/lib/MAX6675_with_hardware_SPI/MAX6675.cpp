@@ -1,6 +1,6 @@
 #include <MAX6675.h>
 
-MAX6675::MAX6675(int16_t SSPin=10)
+MAX6675::MAX6675(int16_t SSPin)
 {
 	_SSPin = SSPin;
 	pinMode(_SSPin, OUTPUT);

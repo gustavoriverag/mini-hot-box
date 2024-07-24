@@ -1,16 +1,19 @@
 #include <MAX6675.h>
 
-MAX6675 termo;
+MAX6675 termo(34);
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
+  Serial.begin(9600);
 
-  termo.setPin(22);
- 
+  // termo.setPin(34);
+  // analogWrite(3, 128);
+  delay(1000);
+  Serial.println("Redy");
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   Serial.println(termo.readTempC());
+  delay(1000);
 }
