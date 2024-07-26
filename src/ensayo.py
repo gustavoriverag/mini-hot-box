@@ -15,6 +15,11 @@ def readTime():
     # return current time as string in DD/MM/YYYY HH:MM:SS format
     return time.strftime("%d/%m/%Y %H:%M:%S", time.localtime())
 
+def elapsedTime(cant_datos):
+    st = time.mktime(time.strptime(startTime, "%d/%m/%Y %H:%M:%S"))
+    stamps = np.array([time.mktime(time.strptime(t, "%d/%m/%Y %H:%M:%S")) for t in timestamps[-cant_datos:]]) - st
+    return stamps
+
 def process_data(line):
     global df
     # read data from serial and map to json
@@ -46,63 +51,49 @@ def update(frame):
         except ValueError:
             pass  # Ignore any non-numeric data
     cant_datos = min(100, len(df))
+    x_axis = elapsedTime(cant_datos)
     axs[0][0].clear()
     for t in indexes["Probeta caliente"]:
-        axs[0][0].plot(df[-cant_datos:, t])
+        axs[0][0].scatter(x_axis, df[-cant_datos:, t], marker='-')
     axs[0][0].axhline(y=30, color='r', linestyle='-')
-    axs[0][0].set_xlim(0, 100)
     axs[0][0].set_ylim(15, 40)  # Adjust Y-axis limits as per your data
-    axs[0][0].set_xlabel('Time')
+    axs[0][0].set_xlabel('Tiempo transcurrido [s]')
     axs[0][0].set_ylabel('Temperatura [°C]')
     axs[0][0].set_title('Temperaturas probeta lado caliente')
     axs[0][0].legend([columns[t] for t in indexes["Probeta caliente"]])
 
     axs[0][1].clear()
     for t in indexes["Probeta frío"]:
-        axs[0][1].plot(df[-cant_datos:, t])
-    axs[0][1].set_xlim(0, 100)
+        axs[0][1].scatter(x_axis, df[-cant_datos:, t], marker='-')
     axs[0][1].set_ylim(0, 25)  # Adjust Y-axis limits as per your data
     axs[0][1].axhline(y=10, color='r', linestyle='-')
-    axs[0][1].set_xlabel('Time')
+    axs[0][1].set_xlabel('Tiempo transcurrido [s]')
     axs[0][1].set_ylabel('Temperatura [°C]')
     axs[0][1].set_title('Temperaturas probeta lado frío')
     axs[0][1].legend([columns[t] for t in indexes["Probeta frío"]])
 
     axs[1][0].clear()
-    potencia = df[-cant_datos:, indexes["Calefactor"][2]] * df[-cant_datos:, indexes["Calefactor"][3]]
-    # axs[1][0].plot(potencia)
-    axs[1][0].plot(df[-cant_datos:, indexes["Calefactor"][0]])
-    axs[1][0].plot(df[-cant_datos:, indexes["Refrigerador"][0]])
-    axs[1][0].set_xlim(0, 100)
-    # axs[1][0].set_ylim(0, 120)  # Adjust Y-axis limits as per your data
-    axs[1][0].set_xlabel('Time')
+    axs[1][0].scatter(x_axis, df[-cant_datos:, indexes["Calefactor"][0]], marker='-')
+    axs[1][0].scatter(x_axis, df[-cant_datos:, indexes["Refrigerador"][0]], marker='-')
+    axs[1][0].set_ylim(0, 255)  # Adjust Y-axis limits as per your data
+    axs[1][0].set_xlabel('Tiempo transcurrido [s]')
     axs[1][0].set_ylabel('PWM')
     axs[1][0].legend([columns[indexes["Calefactor"][0]], columns[indexes["Refrigerador"][0]]])
     axs[1][0].set_title('Valores PWM')
 
     axs[1][1].clear()
-    axs[1][1].plot(df[-cant_datos:, indexes["Calefactor"][1]])
-    axs[1][1].plot(df[-cant_datos:, indexes["Cámara Caliente"][0]])
-    axs[1][1].plot(df[-cant_datos:, indexes["Cámara Caliente"][1]])
-    axs[1][1].plot(df[-cant_datos:, indexes["Cámara Fría"][0]])
-    axs[1][1].plot(df[-cant_datos:, indexes["Cámara Fría"][1]])
+    axs[1][1].scatter(x_axis, df[-cant_datos:, indexes["Calefactor"][1]], marker='-')
+    axs[1][1].scatter(x_axis, df[-cant_datos:, indexes["Cámara Caliente"][0]], marker='-')
+    axs[1][1].scatter(x_axis, df[-cant_datos:, indexes["Cámara Caliente"][1]],  marker='-')
+    axs[1][1].scatter(x_axis, df[-cant_datos:, indexes["Cámara Fría"][0]], marker='-')
+    axs[1][1].scatter(x_axis, df[-cant_datos:, indexes["Cámara Fría"][1]], marker='-')
     axs[1][1].axhline(y=30, color='r', linestyle='-')
-    axs[1][1].set_xlim(0, 100)
+    axs[1][1].axhline(y=10, color='b', linestyle='-')
     axs[1][1].set_ylim(0, 80)  # Adjust Y-axis limits as per your data
-    axs[1][1].set_xlabel('Time')
+    axs[1][1].set_xlabel('Tiempo transcurrido [s]')
     axs[1][1].set_ylabel('Temperatura [°C]')
     axs[1][1].set_title('Temperaturas cámara caliente y fría')
     axs[1][1].legend([columns[indexes["Calefactor"][1]], columns[indexes["Cámara Caliente"][0]], columns[indexes["Cámara Caliente"][1]], columns[indexes["Cámara Fría"][0]], columns[indexes["Cámara Fría"][1]]])
-    # axs[1][1].clear()
-    # axs[1][1].plot(df[-cant_datos:, indexes["Calefactor"][1]])
-    # # axs[1][1].plot(df[-cant_datos:, indexes["Calefactor"][3]])
-    # axs[1][1].set_xlim(0, 100)
-    # axs[1][1].set_ylim(20, 60)  # Adjust Y-axis limits as per your data
-    # axs[1][1].set_xlabel('Time')
-    # axs[1][1].set_ylabel('Temperatura [°C]')
-    # axs[1][1].set_title('Temperaturas calefactor')
-    # axs[1][1].legend([columns[indexes["Calefactor"][1]], columns[indexes["Calefactor"][3]]])
-    # axs[1][1].legend([columns[indexes["Cámara Caliente"][0]], columns[indexes["Cámara Caliente"][1]], columns[indexes["Cámara Fría"][0]]])
 
 def connect():
     global ser

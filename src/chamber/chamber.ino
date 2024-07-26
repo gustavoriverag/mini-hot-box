@@ -53,6 +53,8 @@ int sampleTime = 1000;
 int sendTime = 5000;
 int samples = 0;
 
+uint32_t periodoFrio = 60000;
+uint32_t tiempoFrio = 0;
 // 0: Inicial, PID manual, apagado
 // 1: PID manual, transmitiendo datos
 // 2: PID automático, transmitiendo datos
@@ -92,16 +94,22 @@ void loop() {
 
     state = Serial.parseInt();
 
-    if (state == 0 || state == 1){
+    if (state == 0){
       pidCaliente.SetMode(MANUAL);
       pidFrio.SetMode(MANUAL);
       analogWrite(pwm_c, 0);
       analogWrite(pwm_f, 0);
     }
 
+    if (state == 1){
+      pidCaliente.SetMode(MANUAL);
+      pidFrio.SetMode(MANUAL);
+    }
+
     if (state == 2){
       pidCaliente.SetMode(AUTOMATIC);
-      pidFrio.SetMode(AUTOMATIC);
+      // pidFrio.SetMode(AUTOMATIC);
+      output_f = 128;
     }
 
   }
@@ -153,9 +161,18 @@ void loop() {
   if (state == 1){
     output_f = 0;
   } else {
-    temp_f = temps[AMBIENTE_F]/samples;
-    pidFrio.Compute();
+    // temp_f = temps[AMBIENTE_F]/samples;
+    // pidFrio.Compute();
+    if (millis() - tiempoFrio > periodoFrio){
+      if (output_f == 0){
+        output_f = 128;
+      } else {
+        output_f = 0;
+      }
+      tiempoFrio = millis();
+    }
   }
+
   analogWrite(pwm_f, output_f);
 
 

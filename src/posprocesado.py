@@ -9,7 +9,7 @@ import glob
 # last_file = data_files[-1]
 
 #numpy open csv file
-data = np.genfromtxt("C:/Users/Gustavo/Documents/mini-hot-box/outputs/data_17_07_2024_18_24_38.csv", delimiter=',', encoding='utf-8')
+data = np.genfromtxt("C:/Users/Gustavo/Documents/mini-hot-box/outputs/data_23_07_2024_18_58_04.csv", delimiter=',', encoding='utf-8')
 
 data = data[1:, 1:]
 

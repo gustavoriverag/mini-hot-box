@@ -1,6 +1,6 @@
 #include <MAX6675.h>
 
-MAX6675 termo(34);
+MAX6675 termo(2);
 
 void setup() {
   // put your setup code here, to run once:
