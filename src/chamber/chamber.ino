@@ -3,13 +3,8 @@
 #include <utils.h>
 
 // Definir termocupla ambiente caliente y frío
-<<<<<<< HEAD
 #define AMBIENTE_C 9
 #define AMBIENTE_F 21
-=======
-#define AMBIENTE_C 10
-#define AMBIENTE_F 20
->>>>>>> 08aa617ee177fd4a1af7469a1c1d876bcef1ce94
 
 // Pines PWM caliente y frío
 const int pwm_c = 2;
@@ -65,6 +60,85 @@ uint32_t tiempoFrio = 0;
 // 2: PID automático, transmitiendo datos
 int state = 0;
 
+bool newCommand = false;
+const byte numChars = 32;
+char receivedChars[numChars];
+
+void stateChange(int st){
+    state = st;
+    if (state == 0){
+      pidCaliente.SetMode(MANUAL);
+      pidFrio.SetMode(MANUAL);
+      analogWrite(pwm_c, 0);
+      analogWrite(pwm_f, 0);
+    }
+
+    if (state == 1){
+      pidCaliente.SetMode(MANUAL);
+      pidFrio.SetMode(MANUAL);
+    }
+
+    if (state == 2){
+      pidCaliente.SetMode(AUTOMATIC);
+      // pidFrio.SetMode(AUTOMATIC);
+      output_f = 128;
+    }
+}
+
+void parseCommand(){
+  //basado en https://forum.arduino.cc/t/serial-input-basics-updated/382007
+  char rc;
+  static byte ndx = 0;
+  char c;
+  while (Serial.available() > 0){
+    if (newCommand == false) {
+    c = Serial.read();
+    newCommand = true;
+    } else {
+      rc = Serial.read();
+      if (rc == '\n') {
+        receivedChars[ndx] = '\0'; // terminate the string
+        ndx = 0;
+        newCommand = false;
+        switch (c)
+        {
+        case 's':
+          stateChange(atoi(receivedChars));
+          break;
+        case 'p':
+          if (receivedChars[0] == 'c'){
+            kp_c = atof(receivedChars+1);
+          } else if (receivedChars[0] == 'f'){
+            kp_f = atof(receivedChars+1);
+          }
+          break;
+        case 'i':
+          if (receivedChars[0] == 'c'){
+            ki_c = atof(receivedChars+1);
+          } else if (receivedChars[0] == 'f'){
+            ki_f = atof(receivedChars+1);
+          }
+          break;
+        case 'd':
+          if (receivedChars[0] == 'c'){
+            kd_c = atof(receivedChars+1);
+          } else if (receivedChars[0] == 'f'){
+            kd_f = atof(receivedChars+1);
+          }
+          break;
+        default:
+          break;
+        }
+        return;
+      }
+      if (ndx < numChars) {
+        receivedChars[ndx] = rc;
+        ndx++;
+      }
+    }
+  }
+}
+
 void setup() {
   
   // Inicializar serial
@@ -94,30 +168,7 @@ void setup() {
 }
 
 void loop() {
-
-  if (Serial.available() > 0){
-
-    state = Serial.parseInt();
-
-    if (state == 0){
-      pidCaliente.SetMode(MANUAL);
-      pidFrio.SetMode(MANUAL);
-      analogWrite(pwm_c, 0);
-      analogWrite(pwm_f, 0);
-    }
-
-    if (state == 1){
-      pidCaliente.SetMode(MANUAL);
-      pidFrio.SetMode(MANUAL);
-    }
-
-    if (state == 2){
-      pidCaliente.SetMode(AUTOMATIC);
-      // pidFrio.SetMode(AUTOMATIC);
-      output_f = 128;
-    }
-
-  }
+  parseCommand();
 
   if (state == 0){
     return;
