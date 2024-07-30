@@ -54,7 +54,7 @@ def update(frame):
     x_axis = elapsedTime(cant_datos)
     axs[0][0].clear()
     for t in indexes["Probeta caliente"]:
-        axs[0][0].scatter(x_axis, df[-cant_datos:, t], marker='-')
+        axs[0][0].plot(x_axis, df[-cant_datos:, t])
     axs[0][0].axhline(y=30, color='r', linestyle='-')
     axs[0][0].set_ylim(15, 40)  # Adjust Y-axis limits as per your data
     axs[0][0].set_xlabel('Tiempo transcurrido [s]')
@@ -64,7 +64,7 @@ def update(frame):
 
     axs[0][1].clear()
     for t in indexes["Probeta frío"]:
-        axs[0][1].scatter(x_axis, df[-cant_datos:, t], marker='-')
+        axs[0][1].plot(x_axis, df[-cant_datos:, t])
     axs[0][1].set_ylim(0, 25)  # Adjust Y-axis limits as per your data
     axs[0][1].axhline(y=10, color='r', linestyle='-')
     axs[0][1].set_xlabel('Tiempo transcurrido [s]')
@@ -73,8 +73,8 @@ def update(frame):
     axs[0][1].legend([columns[t] for t in indexes["Probeta frío"]])
 
     axs[1][0].clear()
-    axs[1][0].scatter(x_axis, df[-cant_datos:, indexes["Calefactor"][0]], marker='-')
-    axs[1][0].scatter(x_axis, df[-cant_datos:, indexes["Refrigerador"][0]], marker='-')
+    axs[1][0].plot(x_axis, df[-cant_datos:, indexes["Calefactor"][0]])
+    axs[1][0].plot(x_axis, df[-cant_datos:, indexes["Refrigerador"][0]])
     axs[1][0].set_ylim(0, 255)  # Adjust Y-axis limits as per your data
     axs[1][0].set_xlabel('Tiempo transcurrido [s]')
     axs[1][0].set_ylabel('PWM')
@@ -82,11 +82,11 @@ def update(frame):
     axs[1][0].set_title('Valores PWM')
 
     axs[1][1].clear()
-    axs[1][1].scatter(x_axis, df[-cant_datos:, indexes["Calefactor"][1]], marker='-')
-    axs[1][1].scatter(x_axis, df[-cant_datos:, indexes["Cámara Caliente"][0]], marker='-')
-    axs[1][1].scatter(x_axis, df[-cant_datos:, indexes["Cámara Caliente"][1]],  marker='-')
-    axs[1][1].scatter(x_axis, df[-cant_datos:, indexes["Cámara Fría"][0]], marker='-')
-    axs[1][1].scatter(x_axis, df[-cant_datos:, indexes["Cámara Fría"][1]], marker='-')
+    axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Calefactor"][1]])
+    axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Caliente"][0]])
+    axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Caliente"][1]],  marker='_')
+    axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Fría"][0]])
+    axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Fría"][1]])
     axs[1][1].axhline(y=30, color='r', linestyle='-')
     axs[1][1].axhline(y=10, color='b', linestyle='-')
     axs[1][1].set_ylim(0, 80)  # Adjust Y-axis limits as per your data
@@ -157,12 +157,12 @@ def plot_toggle():
     global state
     if state == 0:
         schedule_update()
-        ser.write("1".encode())
+        ser.write("s1\n".encode())
         state = 1
         temp_control_button.config(state="normal")
         start_button.config(text="Stop Plotting")
     elif state == 1:
-        ser.write("0".encode())
+        ser.write("s0\n".encode())
         state = 0
         temp_control_button.config(state="disabled")
         start_button.config(text="Start Plotting")
@@ -170,13 +170,13 @@ def plot_toggle():
 def temp_control_toggle():
     global state
     if state == 1:
-        ser.write("2".encode())
+        ser.write("s2\n".encode())
         state = 2
         start_button.config(state="disabled")
         temp_control_button.config(text="Stop Temp Control")
     else:
-        ser.write("0".encode())
-        ser.write("1".encode())
+        ser.write("s0\n".encode())
+        ser.write("s1\n".encode())
         state = 1
         start_button.config(state="normal")
         temp_control_button.config(text="Start Temp Control")
@@ -191,10 +191,6 @@ startTime = readTime()
 print("Start Time: ", startTime)
 
 lastSave = time.time()
-
-#Get list of available serial ports
-ports = serial.tools.list_ports.comports()
-ports = [port.device for port in ports]
 
 # Set up the serial port.
 ser = None
@@ -220,7 +216,7 @@ state = 0
 
 frame = tk.Frame(root)
 
-port_combobox = ttk.Combobox(frame, values=ports, postcommand=get_ports)
+port_combobox = ttk.Combobox(frame, postcommand=get_ports)
 port_combobox.grid(row=0, column=0, columnspan=2)
 
 connect_button = tk.Button(frame, text="Connect", command=connect)
@@ -235,15 +231,28 @@ start_button.grid(row=1, column=0, columnspan=4, sticky="ew")
 temp_control_button = tk.Button(frame, text="Start Temp Control", command=temp_control_toggle, state="disabled")
 temp_control_button.grid(row=2, column=0, columnspan=4, sticky="ew")
 
-hot_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Heater PWM")
-hot_pwm.grid(row=3, column=0, columnspan=4, sticky="ew")
-cold_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Cooler PWM")
-cold_pwm.grid(row=4, column=0, columnspan=4, sticky="ew")
+# hot_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Heater PWM")
+# hot_pwm.grid(row=3, column=0, columnspan=4, sticky="ew")
+# cold_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Cooler PWM")
+# cold_pwm.grid(row=4, column=0, columnspan=4, sticky="ew")
+
+# pid_p = ttk.Entry(frame, text="P")
+# pid_confirm_p = tk.Button(frame, text="Set P", command=lambda: ser.write(f"pc{pid_p.get()}\n".encode()))
+# pid_i = ttk.Entry(frame, text="I")
+# pid_confirm_i = tk.Button(frame, text="Set I", command=lambda: ser.write(f"ic{pid_i.get()}\n".encode()))
+# pid_d = ttk.Entry(frame, text="D")
+# pid_confirm_d = tk.Button(frame, text="Set D", command=lambda: ser.write(f"dc{pid_d.get()}\n".encode()))
+
+# pid_p.grid(row=5, column=0)
+# pid_confirm_p.grid(row=5, column=1)
+# pid_i.grid(row=6, column=0)
+# pid_confirm_i.grid(row=6, column=1)
+# pid_d.grid(row=7, column=0)
+# pid_confirm_d.grid(row=7, column=1)
 
 # Set up the figure and axis
-fig, axs = plt.subplots(2,2, figsize=(4.5, 4.5))
+fig, axs = plt.subplots(2,2, figsize=(8, 8))
 # fig, axs = plt.subplots(2,2)
-# ani = animation.FuncAnimation(fig, update, interval=1000)
 
 frame.grid(row=0, column=0, sticky="n")
 frame2 = tk.Frame(root)
@@ -254,11 +263,8 @@ frame2.grid(row=0, column=1, sticky="n")
 root.mainloop()
 close()
 
-
-
 if not os.path.exists(output_path):
     os.makedirs(output_path)
 
 #save data to csv, with a timestamp in the name
 save_data()
-# print("Data saved to: ", os.path.abspath(output_path))
