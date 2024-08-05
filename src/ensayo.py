@@ -84,7 +84,7 @@ def update(frame):
     axs[1][1].clear()
     axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Calefactor"][1]])
     axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Caliente"][0]])
-    axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Caliente"][1]],  marker='_')
+    axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Caliente"][1]])
     axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Fría"][0]])
     axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Fría"][1]])
     axs[1][1].axhline(y=30, color='r', linestyle='-')
@@ -181,6 +181,12 @@ def temp_control_toggle():
         start_button.config(state="normal")
         temp_control_button.config(text="Start Temp Control")
 
+# Set different font sizes for MAC and Windows
+if os.name == "nt":
+    plt.rcParams.update({'font.size': 8})
+else:   
+    plt.rcParams.update({'font.size': 5})
+
 output_path = "../outputs/"
 
 root = tk.Tk()
@@ -231,24 +237,28 @@ start_button.grid(row=1, column=0, columnspan=4, sticky="ew")
 temp_control_button = tk.Button(frame, text="Start Temp Control", command=temp_control_toggle, state="disabled")
 temp_control_button.grid(row=2, column=0, columnspan=4, sticky="ew")
 
-# hot_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Heater PWM")
-# hot_pwm.grid(row=3, column=0, columnspan=4, sticky="ew")
-# cold_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Cooler PWM")
-# cold_pwm.grid(row=4, column=0, columnspan=4, sticky="ew")
+hot_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Heater PWM")
+hot_pwm.grid(row=3, column=0, columnspan=4, sticky="ew")
+pwm_confirm_c = tk.Button(frame, text="Set PWM c", command=lambda: ser.write(f"c{hot_pwm.get()}\n".encode()))
+pwm_confirm_c.grid(row=3, column=3, sticky="ew")
+cold_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Cooler PWM")
+cold_pwm.grid(row=4, column=0, columnspan=3, sticky="ew")
+pwm_confirm_f = tk.Button(frame, text="Set PWM f", command=lambda: ser.write(f"f{cold_pwm.get()}\n".encode()))
+pwm_confirm_f.grid(row=4, column=3, sticky="ew")
 
-# pid_p = ttk.Entry(frame, text="P")
-# pid_confirm_p = tk.Button(frame, text="Set P", command=lambda: ser.write(f"pc{pid_p.get()}\n".encode()))
-# pid_i = ttk.Entry(frame, text="I")
-# pid_confirm_i = tk.Button(frame, text="Set I", command=lambda: ser.write(f"ic{pid_i.get()}\n".encode()))
-# pid_d = ttk.Entry(frame, text="D")
-# pid_confirm_d = tk.Button(frame, text="Set D", command=lambda: ser.write(f"dc{pid_d.get()}\n".encode()))
+pid_p = ttk.Entry(frame, text="P")
+pid_confirm_p = tk.Button(frame, text="Set P", command=lambda: ser.write(f"pc{pid_p.get()}\n".encode()))
+pid_i = ttk.Entry(frame, text="I")
+pid_confirm_i = tk.Button(frame, text="Set I", command=lambda: ser.write(f"ic{pid_i.get()}\n".encode()))
+pid_d = ttk.Entry(frame, text="D")
+pid_confirm_d = tk.Button(frame, text="Set D", command=lambda: ser.write(f"dc{pid_d.get()}\n".encode()))
 
-# pid_p.grid(row=5, column=0)
-# pid_confirm_p.grid(row=5, column=1)
-# pid_i.grid(row=6, column=0)
-# pid_confirm_i.grid(row=6, column=1)
-# pid_d.grid(row=7, column=0)
-# pid_confirm_d.grid(row=7, column=1)
+pid_p.grid(row=5, column=0)
+pid_confirm_p.grid(row=5, column=1)
+pid_i.grid(row=6, column=0)
+pid_confirm_i.grid(row=6, column=1)
+pid_d.grid(row=7, column=0)
+pid_confirm_d.grid(row=7, column=1)
 
 # Set up the figure and axis
 fig, axs = plt.subplots(2,2, figsize=(8, 8))
