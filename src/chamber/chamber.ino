@@ -4,7 +4,7 @@
 
 // Definir termocupla ambiente caliente y frío
 #define AMBIENTE_C 9
-#define AMBIENTE_F 21
+#define AMBIENTE_F 20
 
 // Pines PWM caliente y frío
 const int pwm_c = 2;
@@ -76,12 +76,16 @@ void stateChange(int st){
     if (state == 1){
       pidCaliente.SetMode(MANUAL);
       pidFrio.SetMode(MANUAL);
+      output_c = 0;
+      output_f = 0;
     }
 
     if (state == 2){
+      tiempoFrio = millis();
       pidCaliente.SetMode(AUTOMATIC);
       // pidFrio.SetMode(AUTOMATIC);
-      output_f = 128;
+      output_f = 255;
+      // output_c = 255;
     }
 }
 
@@ -105,9 +109,20 @@ void parseCommand(){
         case 's':
           stateChange(atoi(receivedChars));
           break;
+        case 'c':
+          if (state == 1) {
+            output_c = atoi(receivedChars);
+          }
+          break;
+        case 'f':
+          if (state == 1) {
+            output_f = atoi(receivedChars);
+          }
+          break;
         case 'p':
           if (receivedChars[0] == 'c'){
             kp_c = atof(receivedChars+1);
+            pidCaliente.SetTunings(kp_c, ki_c, kd_c);
           } else if (receivedChars[0] == 'f'){
             kp_f = atof(receivedChars+1);
           }
@@ -115,13 +130,16 @@ void parseCommand(){
         case 'i':
           if (receivedChars[0] == 'c'){
             ki_c = atof(receivedChars+1);
+            pidCaliente.SetTunings(kp_c, ki_c, kd_c);
           } else if (receivedChars[0] == 'f'){
             ki_f = atof(receivedChars+1);
+            
           }
           break;
         case 'd':
           if (receivedChars[0] == 'c'){
             kd_c = atof(receivedChars+1);
+            pidCaliente.SetTunings(kp_c, ki_c, kd_c); 
           } else if (receivedChars[0] == 'f'){
             kd_f = atof(receivedChars+1);
           }
@@ -205,30 +223,35 @@ void loop() {
   lastSend = millis();
 
   // Calcular PID Caliente
-  if (therm/samples > 80 || state == 1){
+  if (therm/samples > 80){
     output_c = 0;
   } else {
     temp_c = temps[AMBIENTE_C]/samples;
     pidCaliente.Compute();
   }
-  analogWrite(pwm_c, output_c);
 
   // Calcular PID
-  if (state == 1){
-    output_f = 0;
-  } else {
+  if (state != 1){
     // temp_f = temps[AMBIENTE_F]/samples;
     // pidFrio.Compute();
     if (millis() - tiempoFrio > periodoFrio){
+      // if (output_c == 0){
+      //   output_c = 0;
+      // } else {
+      //   output_c = 0;
+      // }
       if (output_f == 0){
-        output_f = 128;
+        output_f = 255;
+        periodoFrio = 60000;
       } else {
         output_f = 0;
+        periodoFrio = 30000;
       }
       tiempoFrio = millis();
     }
   }
 
+  analogWrite(pwm_c, output_c);
   analogWrite(pwm_f, output_f);
 
 
