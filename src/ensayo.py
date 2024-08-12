@@ -201,8 +201,10 @@ def temp_control_toggle():
 # Set different font sizes for MAC and Windows
 if os.name == "nt":
     plt.rcParams.update({'font.size': 8})
+    size = 8
 else:   
     plt.rcParams.update({'font.size': 5})
+    size = 4.5
 
 output_path = "../outputs/"
 
@@ -283,7 +285,7 @@ control_frame.grid(row=4, column=0, columnspan=4)
 # pid_confirm_d.grid(row=7, column=1)
 
 # Set up the figure and axis
-fig, axs = plt.subplots(2,2, figsize=(8, 8))
+fig, axs = plt.subplots(2,2, figsize=(size, size))
 # fig, axs = plt.subplots(2,2)
 
 frame.grid(row=0, column=0, sticky="n")
