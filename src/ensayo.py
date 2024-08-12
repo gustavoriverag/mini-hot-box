@@ -133,6 +133,8 @@ def get_ports():
 def save_data():
     global df
     global timestamps
+    global lastSave
+    lastSave = time.time()
     temp_timestamps = np.array(["Timestamp"] + timestamps)
     temp_df = np.append([columns], df, axis=0)
     temp_df = np.c_[temp_timestamps, temp_df]
@@ -151,26 +153,26 @@ def close():
         pass
 
 def schedule_update():
-    global lastSave
     update(0)
     canvas.draw_idle()
-    if time.time() - lastSave > 1*60:
+    if time.time() - lastSave > 5*60:
         save_data()
-        lastSave = time.time()
     root.after(1000, schedule_update)
 
 def plot_toggle():
     global state
+    global startTime
     if state == 0:
         if startTime == 0:
-            global startTime
             global lastSave
             global timestamps
 
             lastSave = time.time()
             startTime = readTime()
             timestamps = [startTime]
+            save_button.config(state="normal")
             print("Start time: ", startTime)
+
         schedule_update()
         ser.write("s1\n".encode())
         state = 1
@@ -251,15 +253,21 @@ start_button.grid(row=1, column=0, columnspan=4, sticky="ew")
 temp_control_button = tk.Button(frame, text="Start Temp Control", command=temp_control_toggle, state="disabled")
 temp_control_button.grid(row=2, column=0, columnspan=4, sticky="ew")
 
-hot_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Heater PWM")
-hot_pwm.grid(row=3, column=0, columnspan=3, sticky="ew")
-pwm_confirm_c = tk.Button(frame, text="Set PWM c", command=lambda: ser.write(f"c{hot_pwm.get()}\n".encode()))
-pwm_confirm_c.grid(row=3, column=3, sticky="ew")
-cold_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Cooler PWM")
-cold_pwm.grid(row=4, column=0, columnspan=3, sticky="ew")
-pwm_confirm_f = tk.Button(frame, text="Set PWM f", command=lambda: ser.write(f"f{cold_pwm.get()}\n".encode()))
-pwm_confirm_f.grid(row=4, column=3, sticky="ew")
+save_button = tk.Button(frame, text="Save Data", command=save_data, state="disabled")
+save_button.grid(row=3, column=0, columnspan=4, sticky="ew")
 
+control_frame = tk.Frame(frame, relief="raised", borderwidth=1)
+
+hot_pwm = tk.Scale(control_frame, from_=0, to=255, orient="horizontal", label="Heater PWM")
+hot_pwm.grid(row=0, column=0, columnspan=3, sticky="ew")
+pwm_confirm_c = tk.Button(control_frame, text="Set PWM", command=lambda: ser.write(f"c{hot_pwm.get()}\n".encode()))
+pwm_confirm_c.grid(row=0, column=3, sticky="nsew")
+cold_pwm = tk.Scale(control_frame, from_=0, to=255, orient="horizontal", label="Cooler PWM")
+cold_pwm.grid(row=1, column=0, columnspan=3, sticky="ew")
+pwm_confirm_f = tk.Button(control_frame, text="Set PWM", command=lambda: ser.write(f"f{cold_pwm.get()}\n".encode()))
+pwm_confirm_f.grid(row=1, column=3, sticky="nsew")
+
+control_frame.grid(row=4, column=0, columnspan=4)
 # pid_p = ttk.Entry(frame, text="P")
 # pid_confirm_p = tk.Button(frame, text="Set P", command=lambda: ser.write(f"pc{pid_p.get()}\n".encode()))
 # pid_i = ttk.Entry(frame, text="I")
