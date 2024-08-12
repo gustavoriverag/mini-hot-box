@@ -26,12 +26,6 @@ float temp;
 Thermistor t_calefactor(A0);
 float therm;
 
-CurrentSensor c_sensor(A1);
-float current;
-
-VoltageSensor v_sensor(A2);
-float voltage;
-
 //Variables PID caliente
 double setpoint_c, temp_c, output_c;
 //Parametros PID caliente
@@ -209,13 +203,6 @@ void loop() {
   // Leer temperatura calefactor
   therm = therm + t_calefactor.readThermistor();
 
-  // Leer voltaje
-  voltage = voltage + v_sensor.readVoltage();
-
-  // Leer corriente
-  current = current + c_sensor.readCurrent();
-
-
 // State send
   if (millis() - lastSend < sendTime){
     return;
@@ -235,11 +222,6 @@ void loop() {
     // temp_f = temps[AMBIENTE_F]/samples;
     // pidFrio.Compute();
     if (millis() - tiempoFrio > periodoFrio){
-      // if (output_c == 0){
-      //   output_c = 0;
-      // } else {
-      //   output_c = 0;
-      // }
       if (output_f == 0){
         output_f = 255;
         periodoFrio = 60000;
@@ -267,14 +249,6 @@ void loop() {
   Serial.print(therm/samples);
   Serial.print(",");
   therm = 0;
-
-  Serial.print(voltage/samples);
-  Serial.print(",");
-  voltage = 0;
-
-  Serial.print(current/samples);
-  Serial.print(",");
-  current = 0;
 
   Serial.print(output_f);
   Serial.print("\n");
