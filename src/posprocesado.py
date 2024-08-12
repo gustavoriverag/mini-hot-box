@@ -10,29 +10,50 @@ import glob
 
 #numpy open csv file
 
-data = np.genfromtxt("C:/Users/Gustavo/Documents/mini-hot-box/outputs/datos_experimento_calefaccion.csv", delimiter=',', encoding='utf-8')
+data = np.genfromtxt("C:/Users/Gustavo/Documents/mini-hot-box/outputs/data_09_08_2024_10_21_57.csv", delimiter=',', encoding='utf-8')
 
 data = data[1:, 1:]
 
 # make matrix with the first nine columns with the last row
-nth_data = data[-1, 0:9].reshape(3,3)[::-1]
+hot_map = np.mean(data[-100:, 0:9], axis=0).reshape(3,3)[::-1]
+cold_map = np.mean(data[-100:, -12:-3], axis=0).reshape(3,3)[::-1]
 
-plt.imshow(nth_data, cmap='hot', interpolation='nearest')
-plt.colorbar()
+fig, ax = plt.subplots(1, 2)
+ax[0].imshow(hot_map, cmap='hot', interpolation='nearest')
+# ax[0].colorbar()
+ax[1].imshow(cold_map, cmap='cool', interpolation='nearest')
+# plt.colorbar()
 plt.show()
 
+
 # scatter 9 columns
+x_axis = range(0, 5*len(data[:,9]), 5)
 for i in range(9):
-    plt.plot(data[:, i])
+    plt.plot(x_axis, data[:, i])
 # plot straight line at y=30
-plt.axhline(y=30, color='r', linestyle='-')
+plt.axhline(y=35, color='r', linestyle='--')
+plt.show()
+
+for i in range(-12, -3):
+    plt.plot(x_axis, data[:, i])
+# plot straight line at y=30
+plt.axhline(y=15, color='b', linestyle='--')
+plt.show()
+
+plt.plot(x_axis, np.mean(data[:, 0:9], axis=1))
+plt.plot(x_axis, np.mean(data[:, -12:-3], axis=1))
+plt.axhline(y=35, color='r', linestyle='--')
+plt.axhline(y=15, color='b', linestyle='--')
+plt.xlabel('Tiempo (s)')
+plt.ylabel('Temperatura (°C)')
+plt.legend(["Promedio Probeta caliente", "Promedio probeta fría"])
 plt.show()
 
 plt.plot(data[:, 9])
 plt.plot(data[:, 10])
 plt.plot(data[:, 12])
 plt.legend(["T amb", "T def", "T calef"])
-plt.axhline(y=30, color='r', linestyle='-')
+plt.axhline(y=35, color='r', linestyle='--')
 plt.show()
 
 
@@ -57,30 +78,30 @@ ax2.set_ylabel('T def', color='b')
 ax2.tick_params('y', colors='b')
 plt.show()
 
-T_max = 23.3
-T_min = 19.6
-dT = T_max - T_min
-dPWM = 255
-K = dT/dPWM
-T_63_2 = 0.632 * dT
-tau = T_63_2 / m
-theta = 60
-print(K, tau, theta)
+# T_max = 23.3
+# T_min = 19.6
+# dT = T_max - T_min
+# dPWM = 255
+# K = dT/dPWM
+# T_63_2 = 0.632 * dT
+# tau = T_63_2 / m
+# theta = 60
+# print(K, tau, theta)
 
-#Ziegler nichols
-Kp = 1.2*tau/(K*(theta + tau))
-Ti = 2*(theta + tau)
-Td = 0.5*theta
+# #Ziegler nichols
+# Kp = 1.2*tau/(K*(theta + tau))
+# Ti = 2*(theta + tau)
+# Td = 0.5*theta
 
-#Cohen Coon
-Kp = 1/K*(1.35 + (0.27*theta)/tau)
-Ti = tau*(2.5+0.85*theta/tau)
-Td = 0.37*tau*(1+0.95*theta/tau)
+# #Cohen Coon
+# Kp = 1/K*(1.35 + (0.27*theta)/tau)
+# Ti = tau*(2.5+0.85*theta/tau)
+# Td = 0.37*tau*(1+0.95*theta/tau)
 
-Ki = Kp/Ti
-Kd = Kp*Td
+# Ki = Kp/Ti
+# Kd = Kp*Td
 
 
-print(Kp, Ki*5, Kd/5)
+# print(Kp, Ki*5, Kd/5)
 
 # print(data)

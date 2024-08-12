@@ -12,8 +12,8 @@ import numpy as np
 
 
 def readTime():
-    # return current time as string in DD/MM/YYYY HH:MM:SS format
-    return time.strftime("%d/%m/%Y %H:%M:%S", time.localtime())
+    # return current time as string in YYYY/MM/DD HH:MM:SS format
+    return time.strftime("%Y/%m/%d %H:%M:%S", time.localtime())
 
 def elapsedTime(cant_datos):
     st = time.mktime(time.strptime(startTime, "%d/%m/%Y %H:%M:%S"))
@@ -50,12 +50,15 @@ def update(frame):
             process_data(line)
         except ValueError:
             pass  # Ignore any non-numeric data
+        
     cant_datos = min(100, len(df))
     x_axis = elapsedTime(cant_datos)
+
     axs[0][0].clear()
+    axs[0][0].grid()
     for t in indexes["Probeta caliente"]:
         axs[0][0].plot(x_axis, df[-cant_datos:, t])
-    axs[0][0].axhline(y=30, color='r', linestyle='-')
+    axs[0][0].axhline(y=setpoint_c, color='r', linestyle='--')
     axs[0][0].set_ylim(15, 40)  # Adjust Y-axis limits as per your data
     axs[0][0].set_xlabel('Tiempo transcurrido [s]')
     axs[0][0].set_ylabel('Temperatura [°C]')
@@ -63,16 +66,18 @@ def update(frame):
     axs[0][0].legend([columns[t] for t in indexes["Probeta caliente"]])
 
     axs[0][1].clear()
+    axs[0][1].grid()
     for t in indexes["Probeta frío"]:
         axs[0][1].plot(x_axis, df[-cant_datos:, t])
     axs[0][1].set_ylim(0, 25)  # Adjust Y-axis limits as per your data
-    axs[0][1].axhline(y=10, color='r', linestyle='-')
+    axs[0][1].axhline(y=setpoint_f, color='b', linestyle='--')
     axs[0][1].set_xlabel('Tiempo transcurrido [s]')
     axs[0][1].set_ylabel('Temperatura [°C]')
     axs[0][1].set_title('Temperaturas probeta lado frío')
     axs[0][1].legend([columns[t] for t in indexes["Probeta frío"]])
 
     axs[1][0].clear()
+    axs[1][0].grid()
     axs[1][0].plot(x_axis, df[-cant_datos:, indexes["Calefactor"][0]])
     axs[1][0].plot(x_axis, df[-cant_datos:, indexes["Refrigerador"][0]])
     axs[1][0].set_ylim(0, 255)  # Adjust Y-axis limits as per your data
@@ -82,13 +87,14 @@ def update(frame):
     axs[1][0].set_title('Valores PWM')
 
     axs[1][1].clear()
+    axs[1][1].grid()
     axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Calefactor"][1]])
     axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Caliente"][0]])
     axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Caliente"][1]])
     axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Fría"][0]])
     axs[1][1].plot(x_axis, df[-cant_datos:, indexes["Cámara Fría"][1]])
-    axs[1][1].axhline(y=30, color='r', linestyle='-')
-    axs[1][1].axhline(y=10, color='b', linestyle='-')
+    axs[1][1].axhline(y=setpoint_c, color='r', linestyle='--')
+    axs[1][1].axhline(y=setpoint_f, color='b', linestyle='--')
     axs[1][1].set_ylim(0, 80)  # Adjust Y-axis limits as per your data
     axs[1][1].set_xlabel('Tiempo transcurrido [s]')
     axs[1][1].set_ylabel('Temperatura [°C]')
@@ -148,7 +154,7 @@ def schedule_update():
     global lastSave
     update(0)
     canvas.draw_idle()
-    if time.time() - lastSave > 5*60:
+    if time.time() - lastSave > 1*60:
         save_data()
         lastSave = time.time()
     root.after(1000, schedule_update)
@@ -156,10 +162,19 @@ def schedule_update():
 def plot_toggle():
     global state
     if state == 0:
+        if startTime == 0:
+            global startTime
+            global lastSave
+            global timestamps
+
+            lastSave = time.time()
+            startTime = readTime()
+            timestamps = [startTime]
+            print("Start time: ", startTime)
         schedule_update()
         ser.write("s1\n".encode())
         state = 1
-        temp_control_button.config(state="normal")
+        temp_control_button.config(state="disabled")
         start_button.config(text="Stop Plotting")
     elif state == 1:
         ser.write("s0\n".encode())
@@ -193,10 +208,9 @@ root = tk.Tk()
 #root.geometry("1280x720")
 root.title("Ensayo")
 
-startTime = readTime()
-print("Start Time: ", startTime)
+startTime = 0
 
-lastSave = time.time()
+lastSave = 0
 
 # Set up the serial port.
 ser = None
@@ -205,7 +219,7 @@ data_structure = open("heated_chamber.json", "r", encoding="utf-8").read()
 
 indexes = dict()
 columns = []
-timestamps = [readTime()]
+timestamps = []
 
 i=0
 for key in json.loads(data_structure)["g"]:
@@ -238,7 +252,7 @@ temp_control_button = tk.Button(frame, text="Start Temp Control", command=temp_c
 temp_control_button.grid(row=2, column=0, columnspan=4, sticky="ew")
 
 hot_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Heater PWM")
-hot_pwm.grid(row=3, column=0, columnspan=4, sticky="ew")
+hot_pwm.grid(row=3, column=0, columnspan=3, sticky="ew")
 pwm_confirm_c = tk.Button(frame, text="Set PWM c", command=lambda: ser.write(f"c{hot_pwm.get()}\n".encode()))
 pwm_confirm_c.grid(row=3, column=3, sticky="ew")
 cold_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Cooler PWM")
@@ -246,19 +260,19 @@ cold_pwm.grid(row=4, column=0, columnspan=3, sticky="ew")
 pwm_confirm_f = tk.Button(frame, text="Set PWM f", command=lambda: ser.write(f"f{cold_pwm.get()}\n".encode()))
 pwm_confirm_f.grid(row=4, column=3, sticky="ew")
 
-pid_p = ttk.Entry(frame, text="P")
-pid_confirm_p = tk.Button(frame, text="Set P", command=lambda: ser.write(f"pc{pid_p.get()}\n".encode()))
-pid_i = ttk.Entry(frame, text="I")
-pid_confirm_i = tk.Button(frame, text="Set I", command=lambda: ser.write(f"ic{pid_i.get()}\n".encode()))
-pid_d = ttk.Entry(frame, text="D")
-pid_confirm_d = tk.Button(frame, text="Set D", command=lambda: ser.write(f"dc{pid_d.get()}\n".encode()))
+# pid_p = ttk.Entry(frame, text="P")
+# pid_confirm_p = tk.Button(frame, text="Set P", command=lambda: ser.write(f"pc{pid_p.get()}\n".encode()))
+# pid_i = ttk.Entry(frame, text="I")
+# pid_confirm_i = tk.Button(frame, text="Set I", command=lambda: ser.write(f"ic{pid_i.get()}\n".encode()))
+# pid_d = ttk.Entry(frame, text="D")
+# pid_confirm_d = tk.Button(frame, text="Set D", command=lambda: ser.write(f"dc{pid_d.get()}\n".encode()))
 
-pid_p.grid(row=5, column=0)
-pid_confirm_p.grid(row=5, column=1)
-pid_i.grid(row=6, column=0)
-pid_confirm_i.grid(row=6, column=1)
-pid_d.grid(row=7, column=0)
-pid_confirm_d.grid(row=7, column=1)
+# pid_p.grid(row=5, column=0)
+# pid_confirm_p.grid(row=5, column=1)
+# pid_i.grid(row=6, column=0)
+# pid_confirm_i.grid(row=6, column=1)
+# pid_d.grid(row=7, column=0)
+# pid_confirm_d.grid(row=7, column=1)
 
 # Set up the figure and axis
 fig, axs = plt.subplots(2,2, figsize=(8, 8))
@@ -270,6 +284,9 @@ canvas = tkagg.FigureCanvasTkAgg(fig, master=frame2)
 canvas.get_tk_widget().pack()
 frame2.grid(row=0, column=1, sticky="n")
 
+setpoint_c = 35
+setpoint_f = 15
+
 root.mainloop()
 close()
 
@@ -277,4 +294,5 @@ if not os.path.exists(output_path):
     os.makedirs(output_path)
 
 #save data to csv, with a timestamp in the name
-save_data()
+if startTime != 0:
+    save_data()
