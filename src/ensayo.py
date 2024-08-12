@@ -16,8 +16,8 @@ def readTime():
     return time.strftime("%Y/%m/%d %H:%M:%S", time.localtime())
 
 def elapsedTime(cant_datos):
-    st = time.mktime(time.strptime(startTime, "%d/%m/%Y %H:%M:%S"))
-    stamps = np.array([time.mktime(time.strptime(t, "%d/%m/%Y %H:%M:%S")) for t in timestamps[-cant_datos:]]) - st
+    st = time.mktime(time.strptime(startTime, "%Y/%m/%d %H:%M:%S"))
+    stamps = np.array([time.mktime(time.strptime(t, "%Y/%m/%d %H:%M:%S")) for t in timestamps[-cant_datos:]]) - st
     return stamps
 
 def process_data(line):
@@ -134,6 +134,8 @@ def save_data():
     global df
     global timestamps
     global lastSave
+    if len(df) == 1:
+        return
     lastSave = time.time()
     temp_timestamps = np.array(["Timestamp"] + timestamps)
     temp_df = np.append([columns], df, axis=0)
@@ -157,6 +159,8 @@ def schedule_update():
     canvas.draw_idle()
     if time.time() - lastSave > 5*60:
         save_data()
+    if state == 0:
+        return
     root.after(1000, schedule_update)
 
 def plot_toggle():
@@ -183,6 +187,8 @@ def plot_toggle():
         state = 0
         temp_control_button.config(state="disabled")
         start_button.config(text="Start Plotting")
+        save_button.config(state="disabled")
+        initializeData()
 
 def temp_control_toggle():
     global state
@@ -197,6 +203,18 @@ def temp_control_toggle():
         state = 1
         start_button.config(state="normal")
         temp_control_button.config(text="Start Temp Control")
+
+def initializeData():
+    global df
+    global timestamps
+    global startTime
+    global lastSave
+    global state
+    df = np.zeros((1, len(columns)))
+    timestamps = []
+    startTime = 0
+    lastSave = 0
+    state = 0
 
 # Set different font sizes for MAC and Windows
 if os.name == "nt":
