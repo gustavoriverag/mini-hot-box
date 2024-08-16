@@ -155,12 +155,12 @@ def close():
         pass
 
 def schedule_update():
+    if state == 0:
+        return
     update(0)
     canvas.draw_idle()
     if time.time() - lastSave > 5*60:
         save_data()
-    if state == 0:
-        return
     root.after(1000, schedule_update)
 
 def plot_toggle():
@@ -176,10 +176,9 @@ def plot_toggle():
             timestamps = [startTime]
             save_button.config(state="normal")
             print("Start time: ", startTime)
-
+        state = 1
         schedule_update()
         ser.write("s1\n".encode())
-        state = 1
         temp_control_button.config(state="disabled")
         start_button.config(text="Stop Plotting")
     elif state == 1:
@@ -221,7 +220,7 @@ if os.name == "nt":
     plt.rcParams.update({'font.size': 8})
     size = 8
 else:   
-    plt.rcParams.update({'font.size': 5})
+    plt.rcParams.update({'font.size': 4.5})
     size = 4.5
 
 output_path = "../outputs/"
@@ -237,7 +236,7 @@ lastSave = 0
 # Set up the serial port.
 ser = None
 # Read json file map from file
-data_structure = open("heated_chamber.json", "r", encoding="utf-8").read()
+data_structure = open("hot_box_config.json", "r", encoding="utf-8").read()
 
 indexes = dict()
 columns = []
