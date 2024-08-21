@@ -174,6 +174,9 @@ void setup() {
   pidCaliente.SetOutputLimits(0, 255);
   pidFrio.SetOutputLimits(0, 255);
 
+  pidCaliente.SetSampleTime(sendTime);
+  pidFrio.SetSampleTime(sendTime);
+
   // Inicializar PWM
   pinMode(pwm_c, OUTPUT);
   pinMode(pwm_f, OUTPUT);
