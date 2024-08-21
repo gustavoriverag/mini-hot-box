@@ -10,7 +10,7 @@ import glob
 
 #numpy open csv file
 
-data = np.genfromtxt("C:/Users/Gustavo/Documents/mini-hot-box/outputs/data_09_08_2024_10_21_57.csv", delimiter=',', encoding='utf-8')
+data = np.genfromtxt("/Users/inaki/mini-hot-box/outputs/data_2024_08_20_11_36_22.csv", delimiter=',', encoding='utf-8')
 
 data = data[1:, 1:]
 
@@ -40,13 +40,32 @@ for i in range(-12, -3):
 plt.axhline(y=15, color='b', linestyle='--')
 plt.show()
 
-plt.plot(x_axis, np.mean(data[:, 0:9], axis=1))
-plt.plot(x_axis, np.mean(data[:, -12:-3], axis=1))
+excl_c = [3]
+mask_c = [False if i in excl_c else True for i in range(0,9)]
+#excl_f = [1, 4]
+excl_f = [3]
+mask_f = [False if i in excl_f else True for i in range(0,9)]
+prom_c = np.mean(data[:, 0:9][-35:, mask_c])
+prom_f = np.mean(data[:, -12:-3][-35:, mask_f])
+
+print("Promedio lado caliente:", prom_c)
+print("Promedio lado frío:", prom_f)
+print("Delta:", prom_c - prom_f)
+
+prom_c_temp = np.mean(data[:, 0:9][:, mask_c], axis=1)
+prom_f_temp = np.mean(data[:, -12:-3][:,mask_f], axis=1)
+tamano = 100
+print("Pendiente lado caliente:", np.polyfit(range(0, 5*len(prom_c_temp[-tamano:]), 5), prom_c_temp[-tamano:], 1)[0]*3600)
+print("Pendiente lado frío:", np.polyfit(range(0, 5*len(prom_f_temp[-tamano:]), 5), prom_f_temp[-tamano:], 1)[0]*3600)
+plt.plot(x_axis, prom_c_temp)
+plt.plot(x_axis, prom_f_temp)
 plt.axhline(y=35, color='r', linestyle='--')
+plt.axhline(y=27.8, color='g', linestyle='--')
 plt.axhline(y=15, color='b', linestyle='--')
+plt.grid()
 plt.xlabel('Tiempo (s)')
 plt.ylabel('Temperatura (°C)')
-plt.legend(["Promedio Probeta caliente", "Promedio probeta fría"])
+plt.legend(["Promedio probeta caliente", "Promedio probeta fría"])
 plt.show()
 
 plt.plot(data[:, 9])
@@ -63,8 +82,8 @@ x_lineal = np.array(range(0, 150, 5)) + off
 m, n = np.polyfit(x_lineal, data[1:, 9][off//5:len(x_lineal)+off//5], 1)
 #r squared factor
 r = np.corrcoef(x_lineal, data[1:, 9][off//5:len(x_lineal)+off//5])
-print(r)
-print(m, n)
+#print(r)
+#print(m, n)
 
 fig, ax1 = plt.subplots()
 ax1.plot(x_lineal, m*x_lineal + n)
@@ -74,7 +93,7 @@ ax1.set_ylabel('T amb', color='g')
 ax1.tick_params('y', colors='g')
 ax2 = ax1.twinx()
 ax2.plot(np.array(range(0, 5*len(data[1:,9]), 5)) + 60, data[1:, 11], 'b-')
-ax2.set_ylabel('T def', color='b')
+ax2.set_ylabel('PWM', color='b')
 ax2.tick_params('y', colors='b')
 plt.show()
 

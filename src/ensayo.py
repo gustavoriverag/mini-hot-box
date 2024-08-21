@@ -69,7 +69,7 @@ def update(frame):
     axs[0][1].grid()
     for t in indexes["Probeta frío"]:
         axs[0][1].plot(x_axis, df[-cant_datos:, t])
-    axs[0][1].set_ylim(0, 25)  # Adjust Y-axis limits as per your data
+    axs[0][1].set_ylim(5, 35)  # Adjust Y-axis limits as per your data
     axs[0][1].axhline(y=setpoint_f, color='b', linestyle='--')
     axs[0][1].set_xlabel('Tiempo transcurrido [s]')
     axs[0][1].set_ylabel('Temperatura [°C]')
@@ -160,6 +160,7 @@ def schedule_update():
     if time.time() - lastSave > 5*60:
         save_data()
     if state == 0:
+        print("a")
         return
     root.after(1000, schedule_update)
 
@@ -177,9 +178,9 @@ def plot_toggle():
             save_button.config(state="normal")
             print("Start time: ", startTime)
 
+        state = 1
         schedule_update()
         ser.write("s1\n".encode())
-        state = 1
         temp_control_button.config(state="disabled")
         start_button.config(text="Stop Plotting")
     elif state == 1:
