@@ -271,21 +271,21 @@ start_button = tk.Button(frame, text="Start Plotting", command=plot_toggle, stat
 start_button.grid(row=1, column=0, columnspan=4, sticky="ew")
 
 temp_control_button = tk.Button(frame, text="Start Temp Control", command=temp_control_toggle, state="disabled")
-temp_control_button.grid(row=2, column=0, columnspan=4, sticky="ew")
+# temp_control_button.grid(row=2, column=0, columnspan=4, sticky="ew")
 
 save_button = tk.Button(frame, text="Save Data", command=save_data, state="disabled")
-save_button.grid(row=3, column=0, columnspan=4, sticky="ew")
+save_button.grid(row=2, column=0, columnspan=4, sticky="ew")
 
 control_frame = tk.Frame(frame)
 
 hot_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Heater PWM")
-hot_pwm.grid(row=4, column=0, columnspan=3, sticky="ew")
+hot_pwm.grid(row=3, column=0, columnspan=3, sticky="ew")
 pwm_confirm_c = tk.Button(frame, text="Set PWM", command=lambda: ser.write(f"c{hot_pwm.get()}\n".encode()))
-pwm_confirm_c.grid(row=4, column=3, sticky="nsew")
+pwm_confirm_c.grid(row=3, column=3, sticky="nsew")
 cold_pwm = tk.Scale(frame, from_=0, to=255, orient="horizontal", label="Cooler PWM")
-cold_pwm.grid(row=5, column=0, columnspan=3, sticky="ew")
+cold_pwm.grid(row=4, column=0, columnspan=3, sticky="ew")
 pwm_confirm_f = tk.Button(frame, text="Set PWM", command=lambda: ser.write(f"f{cold_pwm.get()}\n".encode()))
-pwm_confirm_f.grid(row=5, column=3, sticky="nsew")
+pwm_confirm_f.grid(row=4, column=3, sticky="nsew")
 
 #control_frame.grid(row=4, column=0, columnspan=4, sticky="ew")
 # pid_p = ttk.Entry(frame, text="P")
@@ -313,7 +313,7 @@ canvas.get_tk_widget().pack()
 frame2.grid(row=0, column=1, sticky="n")
 
 setpoint_c = 35
-setpoint_f = 15
+setpoint_f = 27.8
 
 root.mainloop()
 close()
