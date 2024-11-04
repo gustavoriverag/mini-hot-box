@@ -22,21 +22,3 @@ float Thermistor::readThermistor() {
   
   return steinhart;
 }
-
-VoltageSensor::VoltageSensor(uint8_t a_pin) {
-  _vpin = a_pin;
-}
-
-float VoltageSensor::readVoltage() {
-  float voltage_adc = ( (float) analogRead(_vpin) * VCC ) / ADC_MAX;
-  return voltage_adc * (R1 + R2) / R2;
-
-}
-CurrentSensor::CurrentSensor(uint8_t a_pin) {
-  _cpin = a_pin;
-}
-
-float CurrentSensor::readCurrent() {
-    float current = (VCC/2 - analogRead(_cpin) * VCC / ADC_MAX) / ACS712_SENSITIVITY;
-  return current;
-} 

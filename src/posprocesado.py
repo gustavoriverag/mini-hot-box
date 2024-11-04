@@ -52,13 +52,19 @@ mask_c = [False if i in excl_c else True for i in range(0,9)]
 excl_f = []
 mask_f = [False if i in excl_f else True for i in range(0,9)]
 
-prom_c = np.mean(data[:, 0:9][-35:, mask_c])
-prom_c_aire = np.mean(data[-35:, 9])
-prom_c_def = np.mean(data[-35:, 10])
+prom_c_temp = np.mean(data[:, 0:9][:, mask_c], axis=1)
+prom_f_temp = np.mean(data[:, -12:-3][:,mask_f], axis=1)
+tamano = min(1080, len(prom_c_temp)-1)
+poly_c = np.polyfit(range(0, 5*len(prom_c_temp[-tamano:]), 5), prom_c_temp[-tamano:], 1)
+poly_f = np.polyfit(range(0, 5*len(prom_f_temp[-tamano:]), 5), prom_f_temp[-tamano:], 1)
 
-prom_f = np.mean(data[:, -12:-3][-35:, mask_f])
-prom_f_aire = np.mean(data[-35:, -3])
-prom_f_def = np.mean(data[-35:, -2])
+prom_c = np.mean(data[:, 0:9][-tamano:, mask_c])
+prom_c_aire = np.mean(data[-tamano:, 9])
+prom_c_def = np.mean(data[-tamano:, 10])
+
+prom_f = np.mean(data[:, -12:-3][-tamano:, mask_f])
+prom_f_aire = np.mean(data[-tamano:, -3])
+prom_f_def = np.mean(data[-tamano:, -2])
 
 print("Promedio lado caliente:", prom_c)
 print("Promedio aire caliente:", prom_c_aire)
@@ -69,12 +75,6 @@ print("Promedio aire frío:", prom_f_aire)
 print("Promedio deflector frío:", prom_f_def)
 
 print("Delta:", prom_c - prom_f)
-
-prom_c_temp = np.mean(data[:, 0:9][:, mask_c], axis=1)
-prom_f_temp = np.mean(data[:, -12:-3][:,mask_f], axis=1)
-tamano = min(100, len(prom_c_temp)-1)
-poly_c = np.polyfit(range(0, 5*len(prom_c_temp[-tamano:]), 5), prom_c_temp[-tamano:], 1)
-poly_f = np.polyfit(range(0, 5*len(prom_f_temp[-tamano:]), 5), prom_f_temp[-tamano:], 1)
 
 print("Pendiente lado caliente:", poly_c[0]*3600)
 print("Pendiente lado frío:", poly_f[0]*3600)
@@ -93,6 +93,14 @@ plt.legend(["Promedio probeta caliente", "Promedio probeta fría"])
 plt.title('Promedio de temperaturas superficiales para lado caliente y frío en función del tiempo')
 plt.xlabel('Tiempo (s)')
 plt.show()
+
+prom_c += 273.15
+prom_c_aire += 273.15
+prom_c_def += 273.15
+
+prom_f += 273.15
+prom_f_aire += 273.15
+prom_f_def += 273.15
 
 plt.plot(data[:, 9])
 plt.plot(data[:, 10])
@@ -130,9 +138,18 @@ R = 1.3
 Q_h = (V**2)/R
 Q_net = Q_h + Q_aux
 # print(Q_net)
+
+E = 0.9
+sigma = 5.67e-8
+T_m = (prom_c + prom_c_def)/2
+h_r = 4*sigma*(T_m**3)
 A = 0.5*0.7
 
-U = Q_net/(A*(prom_c_temp - prom_f_temp))
+T_amb_c = (prom_c_aire * Q_net / A + E*h_r*(prom_c_aire - prom_c_def)*prom_c)/(Q_net/A + E*h_r*(prom_c_aire - prom_c_def))
+T_amb_f = (prom_f_aire * Q_net / A + E*h_r*(prom_f_aire - prom_f_def)*prom_f)/(Q_net/A + E*h_r*(prom_f_aire - prom_f_def))
+
+
+U = Q_net/(A*(T_amb_c - T_amb_f))
 
 #Stationarity analysis for U
 

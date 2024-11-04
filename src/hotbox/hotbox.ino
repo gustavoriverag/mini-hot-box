@@ -13,7 +13,7 @@ const int pwm_f = 3;
 // Array de n termocuplas
 const size_t n_termocuplas = 22;
 
-// Using pins from 22 to 44
+// Pines para termocuplas
 const int THC_PINS[n_termocuplas] = {22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43};
 
 // Se crean los objetos de las termocuplas
@@ -23,7 +23,9 @@ float temps[n_termocuplas];
 // Variable para lectura de temperatura
 float temp;
 
+// Se inicializa termistor de calefactor
 Thermistor t_calefactor(A0);
+// Variable para lectura de termistor
 float therm;
 
 //Variables PID caliente
@@ -40,26 +42,31 @@ double kp_f = 0.2, ki_f = 1.5, kd_f = 0.1;
 
 PID pidFrio(&temp_f, &output_f, &setpoint_f, kp_f, ki_f, kd_f, P_ON_M, REVERSE);
 
+// Variable para tiempo del último muestreo
 uint32_t lastSample = 0;
+// Variable para tiempo del último envío de datos
 uint32_t lastSend = 0;
 
+// Periodo de muestreo
 int sampleTime = 1000;
+// Periodo de envío de datos
 int sendTime = 5000;
+// Contador de muestras
 int samples = 0;
 
-uint32_t periodoFrio = 60000;
-uint32_t tiempoFrio = 0;
 // 0: Inicial, PID manual, apagado
-// 1: PID manual, transmitiendo datos
-// 2: PID automático, transmitiendo datos
+// 1: Control manual, transmitiendo datos
+// 2: Control PID, transmitiendo datos
 int state = 0;
 
 bool newCommand = false;
 const byte numChars = 32;
 char receivedChars[numChars];
 
+// Función para cambiar estado
 void stateChange(int st){
     state = st;
+    // Estado apagado, se apaga PID y calefactor/refrigerador
     if (state == 0){
       pidCaliente.SetMode(MANUAL);
       pidFrio.SetMode(MANUAL);
@@ -67,6 +74,7 @@ void stateChange(int st){
       analogWrite(pwm_f, 0);
     }
 
+    // Estado manual, se apaga PID y setea variables output a 0
     if (state == 1){
       pidCaliente.SetMode(MANUAL);
       pidFrio.SetMode(MANUAL);
@@ -74,12 +82,10 @@ void stateChange(int st){
       output_f = 0;
     }
 
+    // Estado PID, se enciende PID
     if (state == 2){
-      tiempoFrio = millis();
       pidCaliente.SetMode(AUTOMATIC);
-      // pidFrio.SetMode(AUTOMATIC);
-      output_f = 255;
-      // output_c = 255;
+      pidFrio.SetMode(AUTOMATIC);
     }
 }
 
@@ -183,63 +189,62 @@ void setup() {
 }
 
 void loop() {
+  //Se lee serial en caso de haber instrucciones
   parseCommand();
 
+  // Si se está en estado apagado no se hace nada
   if (state == 0){
     return;
   }
 
-  // State sample
+  // Solo pasar si ha pasado el tiempo de muestreo
   if (millis() - lastSample < sampleTime){
     return;
   }
 
+  // Se incrementa el contador de muestras y actualiza el tiempo de la última muestra
   samples++;
   lastSample = millis();
 
   // Leer temperatura
   for (int i=0;i<n_termocuplas;i++){
     temp = termocuplas[i].readTempC();
+    // Se suma la temperatura para después promediar
     temps[i] = temps[i] + temp;
   }
 
   // Leer temperatura calefactor
   therm = therm + t_calefactor.readThermistor();
 
-// State send
+// Si no ha pasado el tiempo de envío de datos no se hace nada
   if (millis() - lastSend < sendTime){
     return;
   }
+  // Se actualiza tiempo de último envío de datos
   lastSend = millis();
 
   // Calcular PID Caliente
   if (therm/samples > 80){
+    // En caso de que el termistor esté muy caliente se apaga el calefactor
+    // TO DO: Mejorar esta lógica, ya que corta el control de forma abrupta pero solo mientras la temperatura está sobre 80
     output_c = 0;
   } else {
+    // Se actualiza la variable objetivo del PID
+    // TO DO: Usar un mejor objetivo para PID en ambos casos
+    // TO DO: Mover el pid.compute hacia afuera del if de tiempo de envío, ya que la librería usa un parámetro sampleTime para determinar si se debe hacer el cálculo.
+    // Es decir, compute se debe llamar siempre en el loop.
     temp_c = temps[AMBIENTE_C]/samples;
     pidCaliente.Compute();
   }
 
   // Calcular PID
-  if (state != 1){
-    // temp_f = temps[AMBIENTE_F]/samples;
-    // pidFrio.Compute();
-    if (millis() - tiempoFrio > periodoFrio){
-      if (output_f == 0){
-        output_f = 255;
-        periodoFrio = 60000;
-      } else {
-        output_f = 0;
-        periodoFrio = 30000;
-      }
-      tiempoFrio = millis();
-    }
-  }
+  temp_f = temps[AMBIENTE_F]/samples;
+  pidFrio.Compute();
 
   analogWrite(pwm_c, output_c);
   analogWrite(pwm_f, output_f);
 
-
+  // Se envían los datos siempre en el mismo orden. 
   for (int i = 0; i < n_termocuplas; i++){
     Serial.print(temps[i]/samples);
     Serial.print(",");
@@ -256,5 +261,6 @@ void loop() {
   Serial.print(output_f);
   Serial.print("\n");
 
+  // Se reinicia la cantidad de muestras.
   samples = 0;
 }
