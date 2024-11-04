@@ -10,7 +10,7 @@ import pandas as pd
 
 #numpy open csv file
 
-data = np.genfromtxt("/Users/inaki/mini-hot-box/outputs/aluminio.csv", delimiter=',', encoding='utf-8')
+data = np.genfromtxt("..\outputs\data_2024_09_04_12_49_22(madera2continuacion).csv", delimiter=',', encoding='utf-8')
 # data = np.genfromtxt("/Users/inaki/Dropbox/Mi Mac (MacBook-Pro-de-Inaki.local)/Downloads/ensayo_plumavit_09_08.csv", delimiter=',', encoding='utf-8')
 
 data = data[1:, 1:]
@@ -58,23 +58,23 @@ tamano = min(1080, len(prom_c_temp)-1)
 poly_c = np.polyfit(range(0, 5*len(prom_c_temp[-tamano:]), 5), prom_c_temp[-tamano:], 1)
 poly_f = np.polyfit(range(0, 5*len(prom_f_temp[-tamano:]), 5), prom_f_temp[-tamano:], 1)
 
-prom_c = np.mean(data[:, 0:9][-tamano:, mask_c])
-prom_c_aire = np.mean(data[-tamano:, 9])
-prom_c_def = np.mean(data[-tamano:, 10])
+t_c_sup = np.mean(data[:, 0:9], axis=1)
+t_c_aire = data[:, 9]
+t_c_def = data[:, 10]
 
-prom_f = np.mean(data[:, -12:-3][-tamano:, mask_f])
-prom_f_aire = np.mean(data[-tamano:, -3])
-prom_f_def = np.mean(data[-tamano:, -2])
+t_f_sup = np.mean(data[:, -12:-3], axis=1)
+t_f_aire = data[:, -3]
+t_f_def = data[:, -2]
 
-print("Promedio lado caliente:", prom_c)
-print("Promedio aire caliente:", prom_c_aire)
-print("Promedio deflector caliente:", prom_c_def)
+print("Promedio lado caliente:", t_c_sup)
+print("Promedio aire caliente:", t_c_aire)
+print("Promedio deflector caliente:", t_c_def)
 
-print("Promedio lado frío:", prom_f)
-print("Promedio aire frío:", prom_f_aire)
-print("Promedio deflector frío:", prom_f_def)
+print("Promedio lado frío:", t_f_sup)
+print("Promedio aire frío:", t_f_aire)
+print("Promedio deflector frío:", t_f_def)
 
-print("Delta:", prom_c - prom_f)
+print("Delta:", t_c_sup - t_f_sup)
 
 print("Pendiente lado caliente:", poly_c[0]*3600)
 print("Pendiente lado frío:", poly_f[0]*3600)
@@ -94,13 +94,13 @@ plt.title('Promedio de temperaturas superficiales para lado caliente y frío en 
 plt.xlabel('Tiempo (s)')
 plt.show()
 
-prom_c += 273.15
-prom_c_aire += 273.15
-prom_c_def += 273.15
+t_c_sup += 273.15
+t_c_aire += 273.15
+t_c_def += 273.15
 
-prom_f += 273.15
-prom_f_aire += 273.15
-prom_f_def += 273.15
+t_f_sup += 273.15
+t_f_aire += 273.15
+t_f_def += 273.15
 
 plt.plot(data[:, 9])
 plt.plot(data[:, 10])
@@ -141,12 +141,12 @@ Q_net = Q_h + Q_aux
 
 E = 0.9
 sigma = 5.67e-8
-T_m = (prom_c + prom_c_def)/2
+T_m = (t_c_sup + t_c_def)/2
 h_r = 4*sigma*(T_m**3)
 A = 0.5*0.7
 
-T_amb_c = (prom_c_aire * Q_net / A + E*h_r*(prom_c_aire - prom_c_def)*prom_c)/(Q_net/A + E*h_r*(prom_c_aire - prom_c_def))
-T_amb_f = (prom_f_aire * Q_net / A + E*h_r*(prom_f_aire - prom_f_def)*prom_f)/(Q_net/A + E*h_r*(prom_f_aire - prom_f_def))
+T_amb_c = (t_c_aire * Q_net / A + E*h_r*(t_c_aire - t_c_def)*t_c_sup)/(Q_net/A + E*h_r*(t_c_aire - t_c_def))
+T_amb_f = (t_f_aire * Q_net / A + E*h_r*(t_f_aire - t_f_def)*t_f_sup)/(Q_net/A + E*h_r*(t_f_aire - t_f_def))
 
 
 U = Q_net/(A*(T_amb_c - T_amb_f))
@@ -164,7 +164,7 @@ plt.plot(x_axis[-tamano:], rolling_mean, label='mean', color='r')
 plt.plot(x_axis[-tamano:], rolling_std + rolling_mean, label='std', color='g')
 plt.plot(x_axis[-tamano:], rolling_mean - rolling_std, label='std', color='g')
 plt.grid()
-plt.ylim(0, 10)
+# plt.ylim(0, 10)
 plt.xlabel('Tiempo (s)')
 plt.ylabel('Transmitancia térmica (W/m²K)')
 plt.legend()
