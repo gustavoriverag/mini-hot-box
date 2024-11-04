@@ -10,8 +10,8 @@ import pandas as pd
 
 #numpy open csv file
 
-data = np.genfromtxt("C:\\Users\\Gustavo\\Downloads\\data_2024_08_13_11_52_36.csv", delimiter=',', encoding='utf-8')
-data = np.genfromtxt("..\\outputs\\data_2024_09_02_15_11_38.csv", delimiter=',', encoding='utf-8')
+data = np.genfromtxt("/Users/inaki/mini-hot-box/outputs/aluminio.csv", delimiter=',', encoding='utf-8')
+# data = np.genfromtxt("/Users/inaki/Dropbox/Mi Mac (MacBook-Pro-de-Inaki.local)/Downloads/ensayo_plumavit_09_08.csv", delimiter=',', encoding='utf-8')
 
 data = data[1:, 1:]
 
@@ -26,20 +26,24 @@ ax[1].imshow(cold_map, cmap='cool', interpolation='nearest')
 # plt.colorbar()
 plt.show()
 
-
-# scatter 9 columns
 x_axis = range(0, 5*len(data[:,9]), 5)
+legendscaliente = ["T1C", "T2C", "T3C", "T4C", "T5C", "T6C", "T7C", "T8C", "T9C"]
 for i in range(9):
     plt.plot(x_axis, data[:, i])
-# plot straight line at y=30
+plt.legend(legendscaliente)
 plt.axhline(y=35, color='r', linestyle='--')
+plt.title('Medición de temperaturas superficiales en lado caliente en función del tiempo')
+plt.xlabel('Tiempo (s)')
 plt.show()
 
+legendsfrio = ["T1F", "T2F", "T3F", "T4F", "T5F", "T6F", "T7F", "T8F", "T9F"]
 for i in range(-12, -3):
     plt.plot(x_axis, data[:, i])
 # plot straight line at y=30
+plt.legend(legendsfrio)
 plt.axhline(y=28, color='b', linestyle='--')
-plt.ylim(10, 35)
+plt.title('Medición de temperaturas superficiales en lado frío en función del tiempo')
+plt.xlabel('Tiempo (s)')
 plt.show()
 
 excl_c = []
@@ -47,11 +51,23 @@ mask_c = [False if i in excl_c else True for i in range(0,9)]
 #excl_f = [1, 4]
 excl_f = []
 mask_f = [False if i in excl_f else True for i in range(0,9)]
+
 prom_c = np.mean(data[:, 0:9][-35:, mask_c])
+prom_c_aire = np.mean(data[-35:, 9])
+prom_c_def = np.mean(data[-35:, 10])
+
 prom_f = np.mean(data[:, -12:-3][-35:, mask_f])
+prom_f_aire = np.mean(data[-35:, -3])
+prom_f_def = np.mean(data[-35:, -2])
 
 print("Promedio lado caliente:", prom_c)
+print("Promedio aire caliente:", prom_c_aire)
+print("Promedio deflector caliente:", prom_c_def)
+
 print("Promedio lado frío:", prom_f)
+print("Promedio aire frío:", prom_f_aire)
+print("Promedio deflector frío:", prom_f_def)
+
 print("Delta:", prom_c - prom_f)
 
 prom_c_temp = np.mean(data[:, 0:9][:, mask_c], axis=1)
@@ -64,23 +80,35 @@ print("Pendiente lado caliente:", poly_c[0]*3600)
 print("Pendiente lado frío:", poly_f[0]*3600)
 
 plt.plot(x_axis, prom_c_temp)
-plt.plot(x_axis, prom_f_temp)
+plt.plot(x_axis, prom_f_temp)  
 plt.plot(x_axis[-tamano:], np.polyval(poly_c, range(0, 5*tamano, 5)), linestyle='--')
 plt.plot(x_axis[-tamano:], np.polyval(poly_f, range(0, 5*tamano, 5)), linestyle='--')
 plt.axhline(y=35, color='r', linestyle='--')
-# plt.axhline(y=28.3, color='g', linestyle='--')
-plt.axhline(y=28, color='b', linestyle='--')
+plt.axhline(y=28, color='g', linestyle='--')
+#plt.axhline(y=15, color='b', linestyle='--')
 plt.grid()
 plt.xlabel('Tiempo (s)')
 plt.ylabel('Temperatura (°C)')
 plt.legend(["Promedio probeta caliente", "Promedio probeta fría"])
+plt.title('Promedio de temperaturas superficiales para lado caliente y frío en función del tiempo')
+plt.xlabel('Tiempo (s)')
 plt.show()
 
 plt.plot(data[:, 9])
 plt.plot(data[:, 10])
 plt.plot(data[:, 12])
-plt.legend(["T amb", "T def", "T calef"])
+plt.legend(["T aire", "T def", "T calef"])
 plt.axhline(y=35, color='r', linestyle='--')
+plt.title('Temperatura del aire, deflector y calefactor de lado caliente en función del tiempo')
+plt.xlabel('Tiempo (s)')
+plt.show()
+
+plt.plot(data[:, -2])
+plt.plot(data[:, -3])
+plt.legend(["T aire", "T def"])
+plt.axhline(y=28, color='r', linestyle='--')
+plt.title('Temperatura del aire, deflector y calefactor de lado frío en función del tiempo')
+plt.xlabel('Tiempo (s)')
 plt.show()
 
 pwm = [0, 35, 36, 38, 40, 81, 82, 83, 85, 100, 255]
@@ -152,13 +180,27 @@ r = np.corrcoef(x_lineal, data[1:, 9][off//5:len(x_lineal)+off//5])
 fig, ax1 = plt.subplots()
 ax1.plot(x_lineal, m*x_lineal + n)
 ax1.plot(range(0, 5*len(data[1:,9]), 5), data[1:, 9], 'g-')
-ax1.set_xlabel('time (s)')
-ax1.set_ylabel('T amb', color='g')
+ax1.set_xlabel('Tiempo (s)')
+ax1.set_ylabel('T aire caliente', color='g')
 ax1.tick_params('y', colors='g')
 ax2 = ax1.twinx()
 ax2.plot(np.array(range(0, 5*len(data[1:,9]), 5)) + 60, data[1:, 11], 'b-')
-ax2.set_ylabel('PWM', color='b')
+ax2.set_ylabel('PWM calefacción', color='b')
 ax2.tick_params('y', colors='b')
+plt.title('PWM de calefacción y temperatura del aire de lado caliente en función del tiempo')
+plt.show()
+
+fig, ax1 = plt.subplots()
+ax1.plot(x_lineal, m*x_lineal + n)
+ax1.plot(range(0, 5*len(data[1:,9]), 5), data[1:, -3], 'g-')
+ax1.set_xlabel('Tiempo (s)')
+ax1.set_ylabel('T aire frío', color='g')
+ax1.tick_params('y', colors='g')
+ax2 = ax1.twinx()
+ax2.plot(np.array(range(0, 5*len(data[1:,9]), 5)) + 60, data[1:, -1], 'b-')
+ax2.set_ylabel('PWM refrigeración', color='b')
+ax2.tick_params('y', colors='b')
+plt.title('PWM de refrigeración y temperatura del aire de lado frío en función del tiempo')
 plt.show()
 
 # T_max = 23.3
